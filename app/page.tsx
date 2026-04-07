@@ -118,26 +118,24 @@ export default function Home() {
       <div className="flex-1 flex flex-col min-h-full">
         <header className="bg-white dark:bg-[#1e293b] border-b border-slate-200 dark:border-slate-700 px-8 py-5">
           <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-display font-semibold text-slate-900 dark:text-slate-100">
-                  {currentProject?.name || 'Dashboard'}
-                </h1>
-                <UserMenu />
-              </div>
-              <p className="text-sm text-slate-500 mt-1">
+            <div className="flex items-center gap-4">
+              <h1 className="text-2xl font-display font-semibold text-slate-900 dark:text-slate-100">
+                {currentProject?.name || 'Dashboard'}
+              </h1>
+              <button
+                onClick={() => setShowForm(true)}
+                className="btn-primary flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                New Task
+              </button>
+              <p className="text-sm text-slate-500">
                 {projectTickets.length} {projectTickets.length === 1 ? 'task' : 'tasks'} in this project
               </p>
             </div>
-            <button
-              onClick={() => setShowForm(true)}
-              className="btn-primary flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              New Task
-            </button>
+            <UserMenu />
           </div>
         </header>
 
