@@ -2,6 +2,7 @@
 
 import { SignInButton, SignUpButton, useUser } from '@clerk/nextjs';
 import { Package, Workflow, Users, Filter, ArrowRight, Check } from 'lucide-react';
+import Image from 'next/image';
 
 const FEATURES = [
   {
@@ -46,9 +47,9 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <span className="text-xl font-display font-semibold text-slate-900 dark:text-white">
-              Taskflow
-            </span>
+            <div className="relative h-10 w-36">
+              <Image src="/logo2.png" alt="Taskflow" fill className="object-contain" />
+            </div>
             <div className="hidden md:flex items-center gap-6">
               <a href="#features" className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
                 Features
