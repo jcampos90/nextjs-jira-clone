@@ -28,8 +28,8 @@ export default function ProjectList({ onSelectProject, onCreateProject, onSettin
   }, [setSelectedProjectId, handleSelect]);
 
   return (
-    <aside className="w-72 bg-white dark:bg-[#1e293b] border-r border-slate-200 dark:border-slate-700 flex flex-col">
-      <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+    <aside className="w-72 bg-white dark:bg-[#1e293b] border-r border-slate-200 dark:border-slate-700 flex flex-col h-full">
+      <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
         <div className="flex items-center gap-2 mb-1">
           <div className="w-8 h-8 bg-[#1a3a4a] rounded-md flex items-center justify-center shadow-lg shadow-[#1a3a4a]/20">
             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

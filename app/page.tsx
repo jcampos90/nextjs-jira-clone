@@ -126,14 +126,14 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-full flex">
+    <div className="h-screen flex">
       <ProjectList
         onSelectProject={() => {}}
         onCreateProject={() => setShowProjectForm(true)}
         onSettingsClick={(id) => setSettingsProjectId(id)}
       />
 
-      <div className="flex-1 flex flex-col min-h-full">
+      <div className="flex-1 flex flex-col h-full">
         <header className="bg-white dark:bg-[#1e293b] border-b border-slate-200 dark:border-slate-700 px-8 py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
