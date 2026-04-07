@@ -10,6 +10,8 @@
   --color-secondary-light: #2d5a6f;
   --color-accent: #ff6b4a;
   --color-accent-hover: #ff5533;
+  --color-accent-indigo: #4f46e5;
+  --color-accent-indigo-hover: #4338ca;
   --color-cream: #FAF9F7;
   --color-ink: #1A1A1A;
   --color-mist: #f0f7ff;
@@ -371,4 +373,55 @@ body::before {
       radial-gradient(ellipse 80% 50% at 20% 40%, rgba(194, 231, 255, 0.05) 0%, transparent 50%),
       radial-gradient(ellipse 60% 40% at 80% 20%, rgba(194, 231, 255, 0.03) 0%, transparent 50%);
   }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUpDelayed {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.landing-animate {
+  animation: fadeInUp 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+.landing-animate-delay-1 {
+  animation: fadeInUp 0.6s ease-out forwards;
+  animation-delay: 0.1s;
+  opacity: 0;
+}
+
+.landing-animate-delay-2 {
+  animation: fadeInUp 0.6s ease-out forwards;
+  animation-delay: 0.2s;
+  opacity: 0;
+}
+
+.landing-animate-delay-3 {
+  animation: fadeInUp 0.6s ease-out forwards;
+  animation-delay: 0.3s;
+  opacity: 0;
+}
+
+.landing-animate-delay-4 {
+  animation: fadeInUp 0.6s ease-out forwards;
+  animation-delay: 0.4s;
+  opacity: 0;
 }

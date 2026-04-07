@@ -5,11 +5,14 @@ export interface Project {
   id: string;
   name: string;
   description: string;
+  prefix?: string;
+  nextTicketNumber?: number;
   createdAt: number;
 }
 
 export interface Ticket {
   id: string;
+  ticketNumber?: string;
   title: string;
   description: string;
   status: TicketStatus;

@@ -7,6 +7,8 @@ interface ApiProject {
   id: string;
   name: string;
   description: string;
+  prefix: string;
+  nextTicketNumber: number;
   createdAt: string;
   updatedAt: string;
   ownerId: string;
@@ -15,6 +17,7 @@ interface ApiProject {
 
 interface ApiTicket {
   id: string;
+  ticketNumber: string;
   title: string;
   description: string;
   status: string;

@@ -49,9 +49,18 @@ export default function TicketDetail({ ticket, onClose, onEdit, onDelete }: Tick
         </div>
         
         <div className="p-6">
-          <h2 className="text-2xl font-display font-semibold text-[#1A1A1A] dark:text-[#E8E6E3] mb-6">
-            {ticket.title}
-          </h2>
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              {ticket.ticketNumber && (
+                <span className="text-sm font-mono text-[#8B8680] mb-2 block">
+                  {ticket.ticketNumber}
+                </span>
+              )}
+              <h2 className="text-2xl font-display font-semibold text-[#1A1A1A] dark:text-[#E8E6E3]">
+                {ticket.title}
+              </h2>
+            </div>
+          </div>
           
           <div className="flex items-center gap-3 mb-6">
             <button

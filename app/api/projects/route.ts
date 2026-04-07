@@ -39,6 +39,8 @@ export async function POST(request: NextRequest) {
       data: {
         name: body.name,
         description: body.description || "",
+        prefix: body.prefix?.toUpperCase() || "",
+        nextTicketNumber: 1,
         ownerId: user.id,
       },
       include: {

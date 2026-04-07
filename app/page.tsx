@@ -8,6 +8,8 @@ import { Ticket, TicketStatus, STATUS_ORDER, STATUS_CONFIG } from '@/app/types';
 import TicketCard from '@/app/components/TicketCard';
 import FilterBar, { FilterState } from '@/app/components/FilterBar';
 import ProjectList from '@/app/components/ProjectList';
+import LandingPage from '@/app/components/LandingPage';
+import { useAuth } from '@clerk/nextjs';
 
 const TicketForm = dynamic(() => import('@/app/components/TicketForm'), { ssr: false });
 const TicketDetail = dynamic(() => import('@/app/components/TicketDetail'), { ssr: false });
@@ -16,6 +18,7 @@ const ProjectForm = dynamic(() => import('@/app/components/ProjectForm'), { ssr:
 const ProjectSettingsModal = dynamic(() => import('@/app/components/ProjectSettingsModal'), { ssr: false });
 
 export default function Home() {
+  const { isLoaded, isSignedIn } = useAuth();
   const { tickets, addTicket, updateTicket, deleteTicket, selectedProjectId, projects, addProject, updateProject } = useJira();
   const [filters, setFilters] = useState<FilterState>({
     search: '',
@@ -100,7 +103,7 @@ export default function Home() {
     }
   };
 
-  const handleProjectSubmit = (data: { name: string; description: string }) => {
+  const handleProjectSubmit = (data: { name: string; description: string; prefix: string }) => {
     if (editingProject) {
       updateProject(editingProject, data);
     } else {
@@ -109,6 +112,18 @@ export default function Home() {
     setShowProjectForm(false);
     setEditingProject(null);
   };
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-full flex items-center justify-center bg-[#f8fafc] dark:bg-[#0f172a]">
+        <div className="animate-pulse text-slate-500">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isSignedIn) {
+    return <LandingPage />;
+  }
 
   return (
     <div className="min-h-full flex">

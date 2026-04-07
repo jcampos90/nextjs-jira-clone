@@ -37,22 +37,40 @@ export async function POST(request: NextRequest) {
 
     await checkProjectAccess(body.projectId, user.id);
 
-    const ticket = await prisma.ticket.create({
-      data: {
-        title: body.title,
-        description: body.description || "",
-        status: body.status || "TODO",
-        priority: body.priority || "MEDIUM",
-        projectId: body.projectId,
-        creatorId: user.id,
-        assigneeId: body.assigneeId,
-        dueDate: body.dueDate || null,
-      },
-      include: {
-        creator: { select: { id: true, name: true, email: true } },
-        assignee: { select: { id: true, name: true, email: true } },
-      },
+    const project = await prisma.project.findUnique({
+      where: { id: body.projectId },
+      select: { prefix: true, nextTicketNumber: true },
     });
+
+    if (!project || !project.prefix) {
+      return NextResponse.json({ error: "Project not found or missing prefix" }, { status: 400 });
+    }
+
+    const ticketNumber = `${project.prefix}-${String(project.nextTicketNumber).padStart(4, '0')}`;
+
+    const [ticket] = await prisma.$transaction([
+      prisma.ticket.create({
+        data: {
+          ticketNumber,
+          title: body.title,
+          description: body.description || "",
+          status: body.status || "TODO",
+          priority: body.priority || "MEDIUM",
+          projectId: body.projectId,
+          creatorId: user.id,
+          assigneeId: body.assigneeId,
+          dueDate: body.dueDate || null,
+        },
+        include: {
+          creator: { select: { id: true, name: true, email: true } },
+          assignee: { select: { id: true, name: true, email: true } },
+        },
+      }),
+      prisma.project.update({
+        where: { id: body.projectId },
+        data: { nextTicketNumber: { increment: 1 } },
+      }),
+    ]);
 
     return NextResponse.json(ticket, { status: 201 });
   } catch (error) {

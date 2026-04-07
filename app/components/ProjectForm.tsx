@@ -5,17 +5,19 @@ import { Project } from '@/app/types';
 
 interface ProjectFormProps {
   project?: Project | null;
-  onSubmit: (data: Omit<Project, 'id' | 'createdAt'>) => void;
+  onSubmit: (data: { name: string; description: string; prefix: string }) => void;
   onClose: () => void;
 }
 
 export default function ProjectForm({ project, onSubmit, onClose }: ProjectFormProps) {
   const [name, setName] = useState(project?.name || '');
   const [description, setDescription] = useState(project?.description || '');
+  const [prefix, setPrefix] = useState(project?.prefix || '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ name, description });
+    const prefixValue = prefix.toUpperCase().slice(0, 2);
+    onSubmit({ name, description, prefix: prefixValue });
   };
 
   return (
@@ -52,6 +54,22 @@ export default function ProjectForm({ project, onSubmit, onClose }: ProjectFormP
               placeholder="Enter project name..."
               className="input-field"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[#2D2D2D] dark:text-[#E8E6E3] mb-2">
+              Ticket Prefix
+            </label>
+            <input
+              type="text"
+              value={prefix}
+              onChange={(e) => setPrefix(e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 2))}
+              required
+              minLength={2}
+              maxLength={2}
+              placeholder="e.g., FM, JC, TP"
+              className="input-field uppercase"
+            />
+            <p className="text-xs text-[#8B8680] mt-1">2-letter prefix for ticket numbers (e.g., FM-0001)</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-[#2D2D2D] dark:text-[#E8E6E3] mb-2">

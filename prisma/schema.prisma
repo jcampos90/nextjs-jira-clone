@@ -21,11 +21,13 @@ model User {
 }
 
 model Project {
-  id          String   @id @default(cuid())
-  name        String
-  description String   @default("")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String
+  description     String   @default("")
+  prefix          String   @default("")
+  nextTicketNumber Int     @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   ownerId     String
   owner       User     @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
@@ -70,6 +72,7 @@ enum TicketPriority {
 
 model Ticket {
   id          String        @id @default(cuid())
+  ticketNumber String       @default("")
   title       String
   description String        @default("")
   status      TicketStatus  @default(TODO)
