@@ -1,65 +1,170 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useMemo } from 'react';
+import { useTickets } from '@/app/context/TicketContext';
+import { Ticket, TicketStatus, STATUS_ORDER, STATUS_CONFIG } from '@/app/types';
+import TicketCard from '@/app/components/TicketCard';
+import TicketForm from '@/app/components/TicketForm';
+import TicketDetail from '@/app/components/TicketDetail';
+import FilterBar, { FilterState } from '@/app/components/FilterBar';
+import ConfirmDialog from '@/app/components/ConfirmDialog';
 
 export default function Home() {
+  const { tickets, addTicket, updateTicket, deleteTicket } = useTickets();
+  const [filters, setFilters] = useState<FilterState>({
+    search: '',
+    status: '',
+    priority: '',
+    assignee: '',
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const [showForm, setShowForm] = useState(false);
+  const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [deletingTicket, setDeletingTicket] = useState<Ticket | null>(null);
+
+  const filteredTickets = useMemo(() => {
+    let result = [...tickets];
+
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      result = result.filter(
+        (t) =>
+          t.title.toLowerCase().includes(searchLower) ||
+          t.description.toLowerCase().includes(searchLower)
+      );
+    }
+    if (filters.status) {
+      result = result.filter((t) => t.status === filters.status);
+    }
+    if (filters.priority) {
+      result = result.filter((t) => t.priority === filters.priority);
+    }
+    if (filters.assignee) {
+      result = result.filter((t) => t.assignee === filters.assignee);
+    }
+
+    result.sort((a, b) => {
+      let comparison = 0;
+      if (filters.sortBy === 'createdAt') {
+        comparison = a.createdAt - b.createdAt;
+      } else if (filters.sortBy === 'dueDate') {
+        const aDate = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+        const bDate = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+        comparison = aDate - bDate;
+      } else if (filters.sortBy === 'priority') {
+        const priorityOrder = { low: 0, medium: 1, high: 2, critical: 3 };
+        comparison = priorityOrder[a.priority] - priorityOrder[b.priority];
+      }
+      return filters.sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    return result;
+  }, [tickets, filters]);
+
+  const getTicketsByStatus = (status: TicketStatus) =>
+    filteredTickets.filter((t) => t.status === status);
+
+  const handleSubmit = (data: Omit<Ticket, 'id' | 'createdAt'>) => {
+    if (editingTicket) {
+      updateTicket(editingTicket.id, data);
+    } else {
+      addTicket(data);
+    }
+    setShowForm(false);
+    setEditingTicket(null);
+  };
+
+  const handleEdit = () => {
+    if (selectedTicket) {
+      setEditingTicket(selectedTicket);
+      setSelectedTicket(null);
+      setShowForm(true);
+    }
+  };
+
+  const handleDelete = () => {
+    if (deletingTicket) {
+      deleteTicket(deletingTicket.id);
+      setDeletingTicket(null);
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-full flex flex-col">
+      <header className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">JIRA Clone</h1>
+          <button
+            onClick={() => setShowForm(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            + Create Ticket
+          </button>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </header>
+
+      <main className="flex-1 p-6">
+        <FilterBar filters={filters} onChange={setFilters} />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+          {STATUS_ORDER.map((status) => (
+            <div key={status} className="flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold text-zinc-700 dark:text-zinc-300">
+                  {STATUS_CONFIG[status].label}
+                </h2>
+                <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                  {getTicketsByStatus(status).length}
+                </span>
+              </div>
+              <div className="flex-1 space-y-3 min-h-[200px]">
+                {getTicketsByStatus(status).map((ticket) => (
+                  <TicketCard
+                    key={ticket.id}
+                    ticket={ticket}
+                    onClick={() => setSelectedTicket(ticket)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </main>
+
+      {showForm && (
+        <TicketForm
+          ticket={editingTicket}
+          onSubmit={handleSubmit}
+          onClose={() => {
+            setShowForm(false);
+            setEditingTicket(null);
+          }}
+        />
+      )}
+
+      {selectedTicket && (
+        <TicketDetail
+          ticket={selectedTicket}
+          onClose={() => setSelectedTicket(null)}
+          onEdit={handleEdit}
+          onDelete={() => {
+            setDeletingTicket(selectedTicket);
+            setSelectedTicket(null);
+          }}
+        />
+      )}
+
+      {deletingTicket && (
+        <ConfirmDialog
+          title="Delete Ticket"
+          message={`Are you sure you want to delete "${deletingTicket.title}"? This action cannot be undone.`}
+          confirmLabel="Delete"
+          onConfirm={handleDelete}
+          onCancel={() => setDeletingTicket(null)}
+        />
+      )}
     </div>
   );
 }
