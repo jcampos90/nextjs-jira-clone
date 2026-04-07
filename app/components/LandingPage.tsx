@@ -103,17 +103,7 @@ export default function LandingPage() {
             <div className="relative rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 shadow-2xl">
               <div className="absolute inset-0 bg-gradient-to-b from-white/0 via-transparent to-slate-50 dark:to-slate-900/50 pointer-events-none" />
               <div className="aspect-[16/9] flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                    <Workflow className="w-8 h-8 text-slate-400" />
-                  </div>
-                  <p className="text-slate-500 dark:text-slate-400 font-medium">
-                    Dashboard Preview
-                  </p>
-                  <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
-                    Sign up to see the full experience
-                  </p>
-                </div>
+                <img src="/dashboard_screenshot.png" alt="Dashboard Preview" className="w-full h-full object-fill" />
               </div>
             </div>
           </div>
