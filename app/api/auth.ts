@@ -1,4 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
+import { clerkClient } from "@clerk/nextjs/server";
 import { prisma } from "./prisma";
 import { CollaboratorRole } from "@prisma/client";
 
@@ -10,17 +11,29 @@ export async function getAuthUserId() {
   return userId;
 }
 
-export async function getOrCreateUser(clerkUserId: string, email?: string, name?: string | null) {
+export async function getOrCreateUser(clerkUserId: string) {
   let user = await prisma.user.findUnique({
     where: { id: clerkUserId },
   });
 
   if (!user) {
+    const client = await clerkClient();
+    let email = `${clerkUserId}@placeholder.local`;
+    let name: string | null = null;
+
+    try {
+      const clerkUser = await client.users.getUser(clerkUserId);
+      email = clerkUser.emailAddresses[0]?.emailAddress || email;
+      name = clerkUser.fullName;
+    } catch (err) {
+      console.error("Failed to fetch Clerk user:", err);
+    }
+
     user = await prisma.user.create({
       data: {
         id: clerkUserId,
-        email: email || `${clerkUserId}@placeholder.local`,
-        name: name || null,
+        email,
+        name,
       },
     });
   }

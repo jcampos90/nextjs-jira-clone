@@ -13,6 +13,7 @@ const TicketForm = dynamic(() => import('@/app/components/TicketForm'), { ssr: f
 const TicketDetail = dynamic(() => import('@/app/components/TicketDetail'), { ssr: false });
 const ConfirmDialog = dynamic(() => import('@/app/components/ConfirmDialog'), { ssr: false });
 const ProjectForm = dynamic(() => import('@/app/components/ProjectForm'), { ssr: false });
+const ProjectSettingsModal = dynamic(() => import('@/app/components/ProjectSettingsModal'), { ssr: false });
 
 export default function Home() {
   const { tickets, addTicket, updateTicket, deleteTicket, selectedProjectId, projects, addProject, updateProject } = useJira();
@@ -30,6 +31,7 @@ export default function Home() {
   const [deletingTicket, setDeletingTicket] = useState<Ticket | null>(null);
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [editingProject, setEditingProject] = useState<string | null>(null);
+  const [settingsProjectId, setSettingsProjectId] = useState<string | null>(null);
 
   const currentProject = projects.find((p) => p.id === selectedProjectId);
 
@@ -113,6 +115,7 @@ export default function Home() {
       <ProjectList
         onSelectProject={() => {}}
         onCreateProject={() => setShowProjectForm(true)}
+        onSettingsClick={(id) => setSettingsProjectId(id)}
       />
 
       <div className="flex-1 flex flex-col min-h-full">
@@ -219,6 +222,15 @@ export default function Home() {
             setShowProjectForm(false);
             setEditingProject(null);
           }}
+        />
+      )}
+
+      {settingsProjectId && (
+        <ProjectSettingsModal
+          project={projects.find((p) => p.id === settingsProjectId) || null}
+          isOpen={!!settingsProjectId}
+          onClose={() => setSettingsProjectId(null)}
+          onProjectUpdate={updateProject}
         />
       )}
     </div>
