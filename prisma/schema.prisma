@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ownedProjects      Project[]            @relation("ProjectOwner")
+  collaboratedProjects ProjectCollaborator[]
+  createdTickets    Ticket[]              @relation("TicketCreator")
+  assignedTickets   Ticket[]              @relation("TicketAssignee")
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ownerId     String
+  owner       User     @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  collaborators ProjectCollaborator[]
+  tickets      Ticket[]
+}
+
+enum CollaboratorRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+model ProjectCollaborator {
+  id        String           @id @default(cuid())
+  role      CollaboratorRole @default(VIEWER)
+  createdAt DateTime         @default(now())
+
+  userId    String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+}
+
+enum TicketStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model Ticket {
+  id          String        @id @default(cuid())
+  title       String
+  description String        @default("")
+  status      TicketStatus  @default(TODO)
+  priority    TicketPriority @default(MEDIUM)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  dueDate     DateTime?
+
+  projectId   String
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  creatorId   String
+  creator     User          @relation("TicketCreator", fields: [creatorId], references: [id])
+
+  assigneeId  String?
+  assignee    User?         @relation("TicketAssignee", fields: [assigneeId], references: [id])
+}

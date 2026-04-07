@@ -46,7 +46,7 @@ export default function ProjectList({ onSelectProject, onCreateProject }: Projec
         </div>
         <nav className="space-y-1">
           {projects.map((project, index) => (
-            <button
+            <div
               key={project.id}
               onClick={() => handleProjectClick(project.id)}
               className={`w-full group flex items-center justify-between px-3 py-2.5 rounded-md cursor-pointer transition-all duration-200 animate-fade-in stagger-${index + 1} ${
@@ -85,7 +85,7 @@ export default function ProjectList({ onSelectProject, onCreateProject }: Projec
                   </button>
                 )}
               </div>
-            </button>
+            </div>
           ))}
         </nav>
       </div>
