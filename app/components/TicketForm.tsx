@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Ticket, TicketStatus, TicketPriority, MOCK_USERS, STATUS_ORDER } from '@/app/types';
+import { useJira } from '@/app/context/JiraContext';
 
 interface TicketFormProps {
   ticket?: Ticket | null;
@@ -17,6 +18,7 @@ function getInitialState(ticket: Ticket | null | undefined) {
       status: ticket.status,
       priority: ticket.priority,
       assignee: ticket.assignee,
+      projectId: ticket.projectId,
       dueDate: ticket.dueDate || '',
     };
   }
@@ -26,17 +28,20 @@ function getInitialState(ticket: Ticket | null | undefined) {
     status: 'todo' as TicketStatus,
     priority: 'medium' as TicketPriority,
     assignee: '',
+    projectId: '',
     dueDate: '',
   };
 }
 
 export default function TicketForm({ ticket, onSubmit, onClose }: TicketFormProps) {
+  const { projects, selectedProjectId } = useJira();
   const [initialState] = useState(() => getInitialState(ticket));
   const [title, setTitle] = useState(initialState.title);
   const [description, setDescription] = useState(initialState.description);
   const [status, setStatus] = useState<TicketStatus>(initialState.status);
   const [priority, setPriority] = useState<TicketPriority>(initialState.priority);
   const [assignee, setAssignee] = useState(initialState.assignee);
+  const [projectId, setProjectId] = useState(initialState.projectId || selectedProjectId);
   const [dueDate, setDueDate] = useState(initialState.dueDate);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -47,29 +52,36 @@ export default function TicketForm({ ticket, onSubmit, onClose }: TicketFormProp
       status,
       priority,
       assignee,
+      projectId: projectId || selectedProjectId,
       dueDate: dueDate || null,
     });
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-zinc-900 rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-700">
-          <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-            {ticket ? 'Edit Ticket' : 'Create Ticket'}
-          </h2>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-6 border-b border-[#E8E4DD] dark:border-[#3D3D3D]">
+          <div>
+            <h2 className="text-2xl font-display font-semibold text-[#1A1A1A] dark:text-[#E8E6E3]">
+              {ticket ? 'Edit Task' : 'New Task'}
+            </h2>
+            <p className="text-sm text-[#8B8680] mt-1">
+              {ticket ? 'Update task details below' : 'Create a new task for your project'}
+            </p>
+          </div>
           <button
             onClick={onClose}
-            className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+            className="p-2 text-[#8B8680] hover:text-[#1A1A1A] dark:hover:text-[#E8E6E3] transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
+        
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+            <label className="block text-sm font-medium text-[#2D2D2D] dark:text-[#E8E6E3] mb-2">
               Title
             </label>
             <input
@@ -77,29 +89,50 @@ export default function TicketForm({ ticket, onSubmit, onClose }: TicketFormProp
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter task title..."
+              className="input-field"
             />
           </div>
+          
           <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+            <label className="block text-sm font-medium text-[#2D2D2D] dark:text-[#E8E6E3] mb-2">
               Description
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-              className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows={3}
+              placeholder="Add a detailed description..."
+              className="input-field resize-none"
             />
           </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-[#2D2D2D] dark:text-[#E8E6E3] mb-2">
+              Project
+            </label>
+            <select
+              value={projectId}
+              onChange={(e) => setProjectId(e.target.value)}
+              className="select-field"
+            >
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+              <label className="block text-sm font-medium text-[#2D2D2D] dark:text-[#E8E6E3] mb-2">
                 Status
               </label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as TicketStatus)}
-                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="select-field"
               >
                 {STATUS_ORDER.map((s) => (
                   <option key={s} value={s}>
@@ -109,13 +142,13 @@ export default function TicketForm({ ticket, onSubmit, onClose }: TicketFormProp
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+              <label className="block text-sm font-medium text-[#2D2D2D] dark:text-[#E8E6E3] mb-2">
                 Priority
               </label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as TicketPriority)}
-                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="select-field"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -124,15 +157,16 @@ export default function TicketForm({ ticket, onSubmit, onClose }: TicketFormProp
               </select>
             </div>
           </div>
+          
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+              <label className="block text-sm font-medium text-[#2D2D2D] dark:text-[#E8E6E3] mb-2">
                 Assignee
               </label>
               <select
                 value={assignee}
                 onChange={(e) => setAssignee(e.target.value)}
-                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="select-field"
               >
                 <option value="">Unassigned</option>
                 {MOCK_USERS.map((user) => (
@@ -143,30 +177,31 @@ export default function TicketForm({ ticket, onSubmit, onClose }: TicketFormProp
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+              <label className="block text-sm font-medium text-[#2D2D2D] dark:text-[#E8E6E3] mb-2">
                 Due Date
               </label>
               <input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input-field"
               />
             </div>
           </div>
-          <div className="flex justify-end gap-2 pt-4">
+          
+          <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md"
+              className="btn-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="btn-primary"
             >
-              {ticket ? 'Update' : 'Create'}
+              {ticket ? 'Update Task' : 'Create Task'}
             </button>
           </div>
         </form>

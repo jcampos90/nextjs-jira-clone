@@ -1,16 +1,18 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useTickets } from '@/app/context/TicketContext';
+import { useJira } from '@/app/context/JiraContext';
 import { Ticket, TicketStatus, STATUS_ORDER, STATUS_CONFIG } from '@/app/types';
 import TicketCard from '@/app/components/TicketCard';
 import TicketForm from '@/app/components/TicketForm';
 import TicketDetail from '@/app/components/TicketDetail';
 import FilterBar, { FilterState } from '@/app/components/FilterBar';
 import ConfirmDialog from '@/app/components/ConfirmDialog';
+import ProjectList from '@/app/components/ProjectList';
+import ProjectForm from '@/app/components/ProjectForm';
 
 export default function Home() {
-  const { tickets, addTicket, updateTicket, deleteTicket } = useTickets();
+  const { tickets, addTicket, updateTicket, deleteTicket, selectedProjectId, projects, addProject, updateProject } = useJira();
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     status: '',
@@ -23,9 +25,17 @@ export default function Home() {
   const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [deletingTicket, setDeletingTicket] = useState<Ticket | null>(null);
+  const [showProjectForm, setShowProjectForm] = useState(false);
+  const [editingProject, setEditingProject] = useState<string | null>(null);
+
+  const currentProject = projects.find((p) => p.id === selectedProjectId);
+
+  const projectTickets = useMemo(() => {
+    return tickets.filter((t) => t.projectId === selectedProjectId);
+  }, [tickets, selectedProjectId]);
 
   const filteredTickets = useMemo(() => {
-    let result = [...tickets];
+    let result = [...projectTickets];
 
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
@@ -61,7 +71,7 @@ export default function Home() {
     });
 
     return result;
-  }, [tickets, filters]);
+  }, [projectTickets, filters]);
 
   const getTicketsByStatus = (status: TicketStatus) =>
     filteredTickets.filter((t) => t.status === status);
@@ -91,47 +101,84 @@ export default function Home() {
     }
   };
 
+  const handleProjectSubmit = (data: { name: string; description: string }) => {
+    if (editingProject) {
+      updateProject(editingProject, data);
+    } else {
+      addProject(data);
+    }
+    setShowProjectForm(false);
+    setEditingProject(null);
+  };
+
   return (
-    <div className="min-h-full flex flex-col">
-      <header className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">JIRA Clone</h1>
-          <button
-            onClick={() => setShowForm(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            + Create Ticket
-          </button>
-        </div>
-      </header>
+    <div className="min-h-full flex">
+      <ProjectList
+        onSelectProject={() => {}}
+        onCreateProject={() => setShowProjectForm(true)}
+      />
 
-      <main className="flex-1 p-6">
-        <FilterBar filters={filters} onChange={setFilters} />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
-          {STATUS_ORDER.map((status) => (
-            <div key={status} className="flex flex-col">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-zinc-700 dark:text-zinc-300">
-                  {STATUS_CONFIG[status].label}
-                </h2>
-                <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                  {getTicketsByStatus(status).length}
-                </span>
-              </div>
-              <div className="flex-1 space-y-3 min-h-[200px]">
-                {getTicketsByStatus(status).map((ticket) => (
-                  <TicketCard
-                    key={ticket.id}
-                    ticket={ticket}
-                    onClick={() => setSelectedTicket(ticket)}
-                  />
-                ))}
-              </div>
+      <div className="flex-1 flex flex-col min-h-full">
+        <header className="bg-white dark:bg-[#1e293b] border-b border-slate-200 dark:border-slate-700 px-8 py-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-display font-semibold text-slate-900 dark:text-slate-100">
+                {currentProject?.name || 'Dashboard'}
+              </h1>
+              <p className="text-sm text-slate-500 mt-1">
+                {projectTickets.length} {projectTickets.length === 1 ? 'task' : 'tasks'} in this project
+              </p>
             </div>
-          ))}
-        </div>
-      </main>
+            <button
+              onClick={() => setShowForm(true)}
+              className="btn-primary flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              New Task
+            </button>
+          </div>
+        </header>
+
+        <main className="flex-1 p-8 bg-[#f8fafc] dark:bg-[#0f172a]">
+          <FilterBar filters={filters} onChange={setFilters} />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+            {STATUS_ORDER.map((status, index) => (
+              <div 
+                key={status} 
+                className="kanban-column animate-fade-in"
+                style={{ animationDelay: `${index * 0.05}s` }}
+              >
+                <div className="column-header mb-4">
+                  <h2 className="font-display font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${STATUS_CONFIG[status].dot}`} />
+                    {STATUS_CONFIG[status].label}
+                  </h2>
+                  <span className="text-sm text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">
+                    {getTicketsByStatus(status).length}
+                  </span>
+                </div>
+                <div className="flex-1 space-y-4 min-h-[300px] pb-4">
+                  {getTicketsByStatus(status).map((ticket) => (
+                    <TicketCard
+                      key={ticket.id}
+                      ticket={ticket}
+                      onClick={() => setSelectedTicket(ticket)}
+                    />
+                  ))}
+                  {getTicketsByStatus(status).length === 0 && (
+                    <div className="text-center py-8 text-slate-400 text-sm border border-dashed border-slate-200 dark:border-slate-700 rounded-sm">
+                      No tasks
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </main>
+      </div>
 
       {showForm && (
         <TicketForm
@@ -158,11 +205,22 @@ export default function Home() {
 
       {deletingTicket && (
         <ConfirmDialog
-          title="Delete Ticket"
+          title="Delete Task"
           message={`Are you sure you want to delete "${deletingTicket.title}"? This action cannot be undone.`}
           confirmLabel="Delete"
           onConfirm={handleDelete}
           onCancel={() => setDeletingTicket(null)}
+        />
+      )}
+
+      {showProjectForm && (
+        <ProjectForm
+          project={editingProject ? { id: editingProject, name: '', description: '', createdAt: 0 } : null}
+          onSubmit={handleProjectSubmit}
+          onClose={() => {
+            setShowProjectForm(false);
+            setEditingProject(null);
+          }}
         />
       )}
     </div>

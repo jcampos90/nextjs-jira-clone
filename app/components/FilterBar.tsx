@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { TicketStatus, TicketPriority, MOCK_USERS, STATUS_ORDER } from '@/app/types';
 
 export type FilterState = {
@@ -17,67 +18,102 @@ interface FilterBarProps {
 }
 
 export default function FilterBar({ filters, onChange }: FilterBarProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   return (
-    <div className="flex flex-wrap gap-3 items-center p-4 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700">
-      <div className="flex-1 min-w-[200px]">
+    <div className="flex items-center gap-2 p-2 bg-white dark:bg-[#242424] rounded-sm border border-[#E8E4DD] dark:border-[#3D3D3D]">
+      <div className="relative flex-shrink-0 w-48">
+        <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8B8680]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
         <input
           type="text"
-          placeholder="Search tickets..."
+          placeholder="Search..."
           value={filters.search}
           onChange={(e) => onChange({ ...filters, search: e.target.value })}
-          className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full pl-8 pr-3 py-1.5 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 placeholder:text-[#8B8680] text-[#1A1A1A] dark:text-[#E8E6E3]"
         />
       </div>
+      
+      <div className="w-px h-4 bg-[#E8E4DD] dark:bg-[#3D3D3D]" />
+      
       <select
         value={filters.status}
         onChange={(e) => onChange({ ...filters, status: e.target.value as TicketStatus | '' })}
-        className="px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="py-1.5 px-2 text-xs bg-transparent border-0 focus:outline-none cursor-pointer text-[#8B8680] hover:text-[#1A1A1A] dark:hover:text-[#E8E6E3]"
       >
-        <option value="">All Statuses</option>
+        <option value="">Status</option>
         {STATUS_ORDER.map((s) => (
           <option key={s} value={s}>
             {s === 'todo' ? 'To Do' : s === 'in-progress' ? 'In Progress' : s === 'in-review' ? 'In Review' : 'Done'}
           </option>
         ))}
       </select>
+      
       <select
         value={filters.priority}
         onChange={(e) => onChange({ ...filters, priority: e.target.value as TicketPriority | '' })}
-        className="px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="py-1.5 px-2 text-xs bg-transparent border-0 focus:outline-none cursor-pointer text-[#8B8680] hover:text-[#1A1A1A] dark:hover:text-[#E8E6E3]"
       >
-        <option value="">All Priorities</option>
+        <option value="">Priority</option>
         <option value="low">Low</option>
         <option value="medium">Medium</option>
         <option value="high">High</option>
         <option value="critical">Critical</option>
       </select>
+      
       <select
         value={filters.assignee}
         onChange={(e) => onChange({ ...filters, assignee: e.target.value })}
-        className="px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="py-1.5 px-2 text-xs bg-transparent border-0 focus:outline-none cursor-pointer text-[#8B8680] hover:text-[#1A1A1A] dark:hover:text-[#E8E6E3]"
       >
-        <option value="">All Assignees</option>
+        <option value="">Assignee</option>
         {MOCK_USERS.map((user) => (
           <option key={user.id} value={user.id}>
             {user.name}
           </option>
         ))}
       </select>
+      
+      <div className="w-px h-4 bg-[#E8E4DD] dark:bg-[#3D3D3D]" />
+      
       <select
         value={filters.sortBy}
         onChange={(e) => onChange({ ...filters, sortBy: e.target.value as FilterState['sortBy'] })}
-        className="px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="py-1.5 px-2 text-xs bg-transparent border-0 focus:outline-none cursor-pointer text-[#8B8680] hover:text-[#1A1A1A] dark:hover:text-[#E8E6E3]"
       >
-        <option value="createdAt">Created Date</option>
+        <option value="createdAt">Created</option>
         <option value="dueDate">Due Date</option>
         <option value="priority">Priority</option>
       </select>
+      
       <button
         onClick={() => onChange({ ...filters, sortOrder: filters.sortOrder === 'asc' ? 'desc' : 'asc' })}
-        className="px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+        className="p-1.5 text-[#8B8680] hover:text-[#C4A35A] transition-colors"
+        title={filters.sortOrder === 'asc' ? 'Ascending' : 'Descending'}
       >
-        {filters.sortOrder === 'asc' ? '↑' : '↓'}
+        {filters.sortOrder === 'asc' ? (
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+          </svg>
+        ) : (
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
+          </svg>
+        )}
       </button>
+
+      {(filters.search || filters.status || filters.priority || filters.assignee) && (
+        <>
+          <div className="w-px h-4 bg-[#E8E4DD] dark:bg-[#3D3D3D]" />
+          <button
+            onClick={() => onChange({ ...filters, search: '', status: '', priority: '', assignee: '' })}
+            className="px-2 py-1 text-xs text-[#8B8680] hover:text-[#D64545] transition-colors"
+          >
+            Clear
+          </button>
+        </>
+      )}
     </div>
   );
 }

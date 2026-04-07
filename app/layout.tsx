@@ -1,21 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
-import { TicketProvider } from "./context/TicketContext";
+import { JiraProvider } from "./context/JiraContext";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const playfair = Playfair_Display({
+  variable: "--font-display",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const dmSans = DM_Sans({
+  variable: "--font-body",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "JIRA Clone - Ticket Management",
-  description: "A JIRA-style ticket management application",
+  title: "Taskflow — Project Management",
+  description: "A refined project and task management experience",
 };
 
 export default function RootLayout({
@@ -26,10 +28,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${playfair.variable} ${dmSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-zinc-50 dark:bg-black">
-        <TicketProvider>{children}</TicketProvider>
+      <body className="min-h-full flex flex-col bg-[#f8fafc] dark:bg-[#0f172a] text-[#1A1A1A] dark:text-[#E8E6E3]">
+        <JiraProvider>{children}</JiraProvider>
       </body>
     </html>
   );
