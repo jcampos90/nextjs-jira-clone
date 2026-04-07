@@ -78,11 +78,11 @@ export default function Home() {
   const getTicketsByStatus = (status: TicketStatus) =>
     filteredTickets.filter((t) => t.status === status);
 
-  const handleSubmit = (data: Omit<Ticket, 'id' | 'createdAt'>) => {
+  const handleSubmit = async (data: Omit<Ticket, 'id' | 'createdAt'>) => {
     if (editingTicket) {
-      updateTicket(editingTicket.id, data);
+      await updateTicket(editingTicket.id, data);
     } else {
-      addTicket(data);
+      await addTicket(data);
     }
     setShowForm(false);
     setEditingTicket(null);

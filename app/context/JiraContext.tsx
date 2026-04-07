@@ -167,8 +167,15 @@ export function JiraProvider({ children }: { children: React.ReactNode }) {
       });
       if (!res.ok) throw new Error('Failed to create ticket');
       const newTicket = await res.json();
-      setTickets((prev) => [newTicket, ...prev]);
-      return newTicket;
+      const mapped = {
+        ...newTicket,
+        status: (newTicket.status?.toLowerCase().replace('_', '-') || 'todo') as Ticket['status'],
+        priority: (newTicket.priority?.toLowerCase() || 'medium') as Ticket['priority'],
+        assignee: newTicket.assignee?.email || newTicket.assigneeId || '',
+        createdAt: new Date(newTicket.createdAt).getTime(),
+      };
+      setTickets((prev) => [mapped, ...prev]);
+      return mapped;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       return null;
