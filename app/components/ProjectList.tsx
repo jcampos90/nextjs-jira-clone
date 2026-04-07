@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo, useCallback, useRef } from 'react';
 import { useJira } from '@/app/context/JiraContext';
 
 interface ProjectListProps {
@@ -10,9 +11,20 @@ interface ProjectListProps {
 export default function ProjectList({ onSelectProject, onCreateProject }: ProjectListProps) {
   const { projects, selectedProjectId, setSelectedProjectId, deleteProject, tickets } = useJira();
 
-  const getTicketCount = (projectId: string) => {
-    return tickets.filter((t) => t.projectId === projectId).length;
-  };
+  const ticketCountMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const ticket of tickets) {
+      map.set(ticket.projectId, (map.get(ticket.projectId) ?? 0) + 1);
+    }
+    return map;
+  }, [tickets]);
+
+  const handleSelect = useRef(onSelectProject).current;
+
+  const handleProjectClick = useCallback((projectId: string) => {
+    setSelectedProjectId(projectId);
+    handleSelect();
+  }, [setSelectedProjectId, handleSelect]);
 
   return (
     <aside className="w-72 bg-white dark:bg-[#1e293b] border-r border-slate-200 dark:border-slate-700 flex flex-col">
@@ -36,10 +48,7 @@ export default function ProjectList({ onSelectProject, onCreateProject }: Projec
           {projects.map((project, index) => (
             <button
               key={project.id}
-              onClick={() => {
-                setSelectedProjectId(project.id);
-                onSelectProject();
-              }}
+              onClick={() => handleProjectClick(project.id)}
               className={`w-full group flex items-center justify-between px-3 py-2.5 rounded-md cursor-pointer transition-all duration-200 animate-fade-in stagger-${index + 1} ${
                 selectedProjectId === project.id
                   ? 'bg-[#c2e7ff]/20 dark:bg-[#1a3a4a]/30 shadow-sm border-l-2 border-[#1a3a4a]'
@@ -58,7 +67,7 @@ export default function ProjectList({ onSelectProject, onCreateProject }: Projec
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-500 bg-slate-100 dark:bg-slate-700/50 px-2 py-0.5 rounded">
-                  {getTicketCount(project.id)}
+                  {ticketCountMap.get(project.id) ?? 0}
                 </span>
                 {project.id !== 'default' && (
                   <button

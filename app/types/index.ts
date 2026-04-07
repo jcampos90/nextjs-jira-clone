@@ -51,3 +51,18 @@ export const MOCK_USERS: User[] = [
   { id: '4', name: 'Diana Prince', email: 'diana@example.com' },
   { id: '5', name: 'Eve Wilson', email: 'eve@example.com' },
 ];
+
+export function formatDateShort(dateStr: string | null): string | null {
+  if (!dateStr) return null;
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+export function formatDateLong(timestamp: number): string {
+  return new Date(timestamp).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}

@@ -1,7 +1,9 @@
 'use client';
 
+import { memo, useMemo } from 'react';
 import { Ticket, MOCK_USERS } from '@/app/types';
 import { useJira } from '@/app/context/JiraContext';
+import { formatDateShort } from '@/app/types';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
 
@@ -10,18 +12,15 @@ interface TicketCardProps {
   onClick: () => void;
 }
 
-export default function TicketCard({ ticket, onClick }: TicketCardProps) {
+function TicketCardComponent({ ticket, onClick }: TicketCardProps) {
   const { projects } = useJira();
-  const assignee = MOCK_USERS.find((u) => u.id === ticket.assignee);
-  const project = projects.find((p) => p.id === ticket.projectId);
-
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return null;
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
-  const isOverdue = ticket.dueDate && new Date(ticket.dueDate) < new Date();
+  
+  const { assignee, project, isOverdue } = useMemo(() => {
+    const assignee = MOCK_USERS.find((u) => u.id === ticket.assignee);
+    const project = projects.find((p) => p.id === ticket.projectId);
+    const isOverdue = ticket.dueDate && new Date(ticket.dueDate) < new Date();
+    return { assignee, project, isOverdue };
+  }, [ticket.assignee, ticket.projectId, ticket.dueDate, projects]);
 
   return (
     <div
@@ -64,10 +63,12 @@ export default function TicketCard({ ticket, onClick }: TicketCardProps) {
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            {formatDate(ticket.dueDate)}
+            {formatDateShort(ticket.dueDate)}
           </div>
         )}
       </div>
     </div>
   );
 }
+
+export default memo(TicketCardComponent);

@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { TicketStatus, TicketPriority, MOCK_USERS, STATUS_ORDER } from '@/app/types';
 
 export type FilterState = {
@@ -18,7 +17,6 @@ interface FilterBarProps {
 }
 
 export default function FilterBar({ filters, onChange }: FilterBarProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
 
   return (
     <div className="flex items-center gap-2 p-2 bg-white dark:bg-[#242424] rounded-sm border border-[#E8E4DD] dark:border-[#3D3D3D]">

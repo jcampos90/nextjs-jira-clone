@@ -2,6 +2,7 @@
 
 import { Ticket, MOCK_USERS, STATUS_ORDER } from '@/app/types';
 import { useJira } from '@/app/context/JiraContext';
+import { formatDateLong } from '@/app/types';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
 
@@ -27,16 +28,6 @@ export default function TicketDetail({ ticket, onClose, onEdit, onDelete }: Tick
     } else if (direction === 'backward' && canMoveBackward) {
       moveTicket(ticket.id, STATUS_ORDER[currentIndex - 1]);
     }
-  };
-
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   };
 
   return (
@@ -117,7 +108,7 @@ export default function TicketDetail({ ticket, onClose, onEdit, onDelete }: Tick
               <div>
                 <h3 className="text-xs font-medium text-[#8B8680] uppercase tracking-wider mb-2">Created</h3>
                 <p className="text-[#2D2D2D] dark:text-[#E8E6E3]">
-                  {formatDate(ticket.createdAt)}
+                  {formatDateLong(ticket.createdAt)}
                 </p>
               </div>
             </div>

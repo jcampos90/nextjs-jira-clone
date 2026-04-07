@@ -1,15 +1,17 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { useJira } from '@/app/context/JiraContext';
 import { Ticket, TicketStatus, STATUS_ORDER, STATUS_CONFIG } from '@/app/types';
 import TicketCard from '@/app/components/TicketCard';
-import TicketForm from '@/app/components/TicketForm';
-import TicketDetail from '@/app/components/TicketDetail';
 import FilterBar, { FilterState } from '@/app/components/FilterBar';
-import ConfirmDialog from '@/app/components/ConfirmDialog';
 import ProjectList from '@/app/components/ProjectList';
-import ProjectForm from '@/app/components/ProjectForm';
+
+const TicketForm = dynamic(() => import('@/app/components/TicketForm'), { ssr: false });
+const TicketDetail = dynamic(() => import('@/app/components/TicketDetail'), { ssr: false });
+const ConfirmDialog = dynamic(() => import('@/app/components/ConfirmDialog'), { ssr: false });
+const ProjectForm = dynamic(() => import('@/app/components/ProjectForm'), { ssr: false });
 
 export default function Home() {
   const { tickets, addTicket, updateTicket, deleteTicket, selectedProjectId, projects, addProject, updateProject } = useJira();
@@ -35,25 +37,19 @@ export default function Home() {
   }, [tickets, selectedProjectId]);
 
   const filteredTickets = useMemo(() => {
-    let result = [...projectTickets];
-
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      result = result.filter(
-        (t) =>
-          t.title.toLowerCase().includes(searchLower) ||
-          t.description.toLowerCase().includes(searchLower)
-      );
-    }
-    if (filters.status) {
-      result = result.filter((t) => t.status === filters.status);
-    }
-    if (filters.priority) {
-      result = result.filter((t) => t.priority === filters.priority);
-    }
-    if (filters.assignee) {
-      result = result.filter((t) => t.assignee === filters.assignee);
-    }
+    const result = projectTickets.filter((t) => {
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        if (!t.title.toLowerCase().includes(searchLower) && 
+            !t.description.toLowerCase().includes(searchLower)) {
+          return false;
+        }
+      }
+      if (filters.status && t.status !== filters.status) return false;
+      if (filters.priority && t.priority !== filters.priority) return false;
+      if (filters.assignee && t.assignee !== filters.assignee) return false;
+      return true;
+    });
 
     result.sort((a, b) => {
       let comparison = 0;
