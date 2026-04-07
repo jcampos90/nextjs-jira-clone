@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { useJira } from '@/app/context/JiraContext';
+import UserMenu from '@/app/components/UserMenu';
 import { Ticket, TicketStatus, STATUS_ORDER, STATUS_CONFIG } from '@/app/types';
 import TicketCard from '@/app/components/TicketCard';
 import FilterBar, { FilterState } from '@/app/components/FilterBar';
@@ -118,9 +119,12 @@ export default function Home() {
         <header className="bg-white dark:bg-[#1e293b] border-b border-slate-200 dark:border-slate-700 px-8 py-5">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-display font-semibold text-slate-900 dark:text-slate-100">
-                {currentProject?.name || 'Dashboard'}
-              </h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-display font-semibold text-slate-900 dark:text-slate-100">
+                  {currentProject?.name || 'Dashboard'}
+                </h1>
+                <UserMenu />
+              </div>
               <p className="text-sm text-slate-500 mt-1">
                 {projectTickets.length} {projectTickets.length === 1 ? 'task' : 'tasks'} in this project
               </p>
