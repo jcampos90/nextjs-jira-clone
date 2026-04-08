@@ -1,8 +1,9 @@
 'use client';
 
 import { SignInButton, SignUpButton, useUser } from '@clerk/nextjs';
-import { Package, Workflow, Users, Filter, ArrowRight, Check } from 'lucide-react';
+import { Package, Workflow, Users, Filter, ArrowRight, Check, Mail, User, AtSign, MessageSquare, Send, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
+import { useState } from 'react';
 
 const FEATURES = [
   {
@@ -34,8 +35,52 @@ const TECH_STACK = [
   { name: 'Clerk', description: 'Authentication' },
 ];
 
+interface ContactFormState {
+  status: 'idle' | 'loading' | 'success' | 'error';
+  message: string;
+}
+
 export default function LandingPage() {
   const { user } = useUser();
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: '',
+  });
+  const [formState, setFormState] = useState<ContactFormState>({
+    status: 'idle',
+    message: '',
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormState({ status: 'loading', message: '' });
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setFormState({ status: 'success', message: 'Message sent successfully!' });
+        setFormData({ name: '', email: '', subject: '', message: '' });
+      } else {
+        setFormState({ status: 'error', message: data.error || 'Failed to send message' });
+      }
+    } catch {
+      setFormState({ status: 'error', message: 'An unexpected error occurred' });
+    }
+  };
 
   if (user) {
     return null;
@@ -56,6 +101,9 @@ export default function LandingPage() {
               </a>
               <a href="#tech" className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
                 Tech Stack
+              </a>
+              <a href="#contact" className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+                Contact
               </a>
             </div>
           </div>
@@ -171,6 +219,154 @@ export default function LandingPage() {
                 </p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Contact Form */}
+      <section id="contact" className="py-20 px-6 bg-slate-50 dark:bg-slate-900/30">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#4f46e5]/10 mb-4">
+              <Mail className="w-7 h-7 text-[#4f46e5]" />
+            </div>
+            <h2 className="text-3xl md:text-4xl font-display font-semibold text-slate-900 dark:text-white">
+              Get in touch
+            </h2>
+            <p className="mt-4 text-slate-600 dark:text-slate-400">
+              Have questions? We&apos;d love to hear from you. Send us a message and we&apos;ll respond as soon as possible.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="bg-white dark:bg-[#1e293b] rounded-xl border border-slate-200 dark:border-slate-800 p-8 shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Name Field */}
+              <div className="space-y-2">
+                <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Full Name <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                    maxLength={100}
+                    placeholder="John Doe"
+                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4f46e5] focus:border-transparent transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Email Field */}
+              <div className="space-y-2">
+                <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Email Address <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                    maxLength={254}
+                    placeholder="john@example.com"
+                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4f46e5] focus:border-transparent transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Subject Field */}
+            <div className="mt-6 space-y-2">
+              <label htmlFor="subject" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                Subject
+              </label>
+              <input
+                type="text"
+                id="subject"
+                name="subject"
+                value={formData.subject}
+                onChange={handleInputChange}
+                maxLength={100}
+                placeholder="What's this about?"
+                className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4f46e5] focus:border-transparent transition-all"
+              />
+            </div>
+
+            {/* Message Field */}
+            <div className="mt-6 space-y-2">
+              <div className="flex items-center justify-between">
+                <label htmlFor="message" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Message <span className="text-red-500">*</span>
+                </label>
+                <span className={`text-xs ${formData.message.length >= 600 ? 'text-red-500' : 'text-slate-400'}`}>
+                  {formData.message.length}/600
+                </span>
+              </div>
+              <div className="relative">
+                <MessageSquare className="absolute left-3 top-4 w-5 h-5 text-slate-400" />
+                <textarea
+                  id="message"
+                  name="message"
+                  value={formData.message}
+                  onChange={handleInputChange}
+                  required
+                  maxLength={600}
+                  rows={5}
+                  placeholder="Tell us what's on your mind..."
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4f46e5] focus:border-transparent transition-all resize-none"
+                />
+              </div>
+            </div>
+
+            {/* Status Messages */}
+            {formState.status === 'success' && (
+              <div className="mt-6 flex items-center gap-3 p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                <p className="text-sm text-green-700 dark:text-green-300">{formState.message}</p>
+              </div>
+            )}
+
+            {formState.status === 'error' && (
+              <div className="mt-6 flex items-center gap-3 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                <p className="text-sm text-red-700 dark:text-red-300">{formState.message}</p>
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={formState.status === 'loading'}
+              className="mt-8 w-full inline-flex items-center justify-center gap-2 bg-[#4f46e5] hover:bg-[#4338ca] disabled:bg-[#4f46e5]/50 disabled:cursor-not-allowed text-white font-medium px-6 py-3 rounded-lg transition-all hover:shadow-lg hover:shadow-indigo-500/25"
+            >
+              {formState.status === 'loading' ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="w-5 h-5" />
+                  Send Message
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Quick Links */}
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-sm text-slate-500 dark:text-slate-400">
+            <a href="mailto:taskflow@jcdevsolutions.com" className="hover:text-[#4f46e5] dark:hover:text-[#818cf8] transition-colors flex items-center gap-2">
+              <Mail className="w-4 h-4" />
+              taskflow@jcdevsolutions.com
+            </a>
           </div>
         </div>
       </section>

@@ -90,3 +90,11 @@ model Ticket {
   assigneeId  String?
   assignee    User?         @relation("TicketAssignee", fields: [assigneeId], references: [id])
 }
+
+model ContactSubmission {
+  id        String   @id @default(cuid())
+  ip        String
+  createdAt DateTime @default(now())
+
+  @@index([ip, createdAt])
+}
