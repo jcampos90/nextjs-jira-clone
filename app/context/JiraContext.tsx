@@ -32,6 +32,12 @@ interface ApiTicket {
   assignee: { id: string; name: string | null; email: string } | null;
 }
 
+interface ProjectMember {
+  id: string;
+  name: string | null;
+  email: string;
+}
+
 interface JiraContextType {
   projects: Project[];
   tickets: Ticket[];
@@ -45,7 +51,9 @@ interface JiraContextType {
   deleteTicket: (id: string) => Promise<void>;
   moveTicket: (id: string, newStatus: TicketStatus) => Promise<void>;
   isLoading: boolean;
+  isTicketsLoading: boolean;
   error: string | null;
+  projectMembers: Record<string, ProjectMember[]>;
 }
 
 const JiraContext = createContext<JiraContextType | undefined>(undefined);
@@ -55,7 +63,9 @@ export function JiraProvider({ children }: { children: React.ReactNode }) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isTicketsLoading, setIsTicketsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [projectMembers, setProjectMembers] = useState<Record<string, ProjectMember[]>>({});
 
   const fetchProjects = useCallback(async () => {
     try {
@@ -79,9 +89,11 @@ export function JiraProvider({ children }: { children: React.ReactNode }) {
     }
   }, [selectedProjectId]);
 
-  const fetchTickets = useCallback(async (projectId: string) => {
+  const fetchTickets = useCallback(async (projectId?: string) => {
     try {
-      const res = await fetch(`/api/tickets?projectId=${projectId}`);
+      setIsTicketsLoading(true);
+      const url = projectId ? `/api/tickets?projectId=${projectId}` : '/api/tickets';
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch tickets');
       const data = await res.json();
       const mapped = data.map((t: ApiTicket) => ({
@@ -94,8 +106,31 @@ export function JiraProvider({ children }: { children: React.ReactNode }) {
       setTickets(mapped);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setIsTicketsLoading(false);
     }
   }, []);
+
+  const fetchProjectMembers = useCallback(async (projectId: string) => {
+    if (projectMembers[projectId]) return;
+    try {
+      const res = await fetch(`/api/projects/${projectId}`);
+      if (!res.ok) return;
+      const project = await res.json();
+      const members: ProjectMember[] = [];
+      if (project.owner) {
+        members.push(project.owner);
+      }
+      if (project.collaborators) {
+        project.collaborators.forEach((c: { user: ProjectMember }) => {
+          members.push(c.user);
+        });
+      }
+      setProjectMembers(prev => ({ ...prev, [projectId]: members }));
+    } catch (err) {
+      console.error('Failed to fetch project members:', err);
+    }
+  }, [projectMembers]);
 
   useEffect(() => {
     fetchProjects();
@@ -104,8 +139,11 @@ export function JiraProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (selectedProjectId) {
       fetchTickets(selectedProjectId);
+      fetchProjectMembers(selectedProjectId);
+    } else {
+      fetchTickets();
     }
-  }, [selectedProjectId, fetchTickets]);
+  }, [selectedProjectId, fetchTickets, fetchProjectMembers]);
 
   const addProject = useCallback(async (project: Omit<Project, 'id' | 'createdAt' | 'ownerId'>): Promise<Project | null> => {
     try {
@@ -133,7 +171,7 @@ export function JiraProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify(updates),
       });
       if (!res.ok) throw new Error('Failed to update project');
-      const _updated = await res.json();
+      await res.json();
       setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -194,7 +232,7 @@ export function JiraProvider({ children }: { children: React.ReactNode }) {
         }),
       });
       if (!res.ok) throw new Error('Failed to update ticket');
-      const _updated = await res.json();
+      await res.json();
       setTickets((prev) => prev.map((t) => (t.id === id ? { ...t, ...updates } : t)));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -225,7 +263,7 @@ export function JiraProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ status: statusMap[newStatus] }),
       });
       if (!res.ok) throw new Error('Failed to move ticket');
-      const _updated = await res.json();
+      await res.json();
       setTickets((prev) => prev.map((t) => (t.id === id ? { ...t, status: newStatus } : t)));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -247,7 +285,9 @@ export function JiraProvider({ children }: { children: React.ReactNode }) {
         deleteTicket,
         moveTicket,
         isLoading,
+        isTicketsLoading,
         error,
+        projectMembers,
       }}
     >
       {children}

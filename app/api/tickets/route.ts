@@ -8,8 +8,26 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get("projectId");
 
+    // If no projectId provided, fetch all tickets for all projects the user has access to
     if (!projectId) {
-      return NextResponse.json({ error: "projectId is required" }, { status: 400 });
+      const userProjects = await prisma.project.findMany({
+        where: {
+          OR: [
+            { ownerId: user.id },
+            { collaborators: { some: { userId: user.id } } },
+          ],
+        },
+        select: { id: true },
+      });
+      const projectIds = userProjects.map(p => p.id);
+      
+    const tickets = await prisma.ticket.findMany({
+      where: { projectId: { in: projectIds } },
+      select: { projectId: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return NextResponse.json(tickets);
     }
 
     await checkProjectAccess(projectId, user.id);
@@ -37,6 +55,24 @@ export async function POST(request: NextRequest) {
 
     await checkProjectAccess(body.projectId, user.id);
 
+    // Resolve assigneeId - could be sent as assigneeId directly, 
+    // or as assignee (email or userId)
+    let assigneeId = body.assigneeId;
+    if (!assigneeId && body.assignee) {
+      // Check if assignee looks like a user ID (not an email)
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (emailRegex.test(body.assignee)) {
+        // It's an email, look up the user
+        const assigneeUser = await prisma.user.findUnique({
+          where: { email: body.assignee },
+        });
+        assigneeId = assigneeUser?.id || null;
+      } else {
+        // It's already a user ID
+        assigneeId = body.assignee;
+      }
+    }
+
     const project = await prisma.project.findUnique({
       where: { id: body.projectId },
       select: { prefix: true, nextTicketNumber: true },
@@ -58,7 +94,7 @@ export async function POST(request: NextRequest) {
           priority: body.priority || "MEDIUM",
           projectId: body.projectId,
           creatorId: user.id,
-          assigneeId: body.assigneeId,
+          assigneeId: assigneeId,
           dueDate: body.dueDate || null,
         },
         include: {
@@ -72,9 +108,9 @@ export async function POST(request: NextRequest) {
       }),
     ]);
 
-    return NextResponse.json(ticket, { status: 201 });
+return NextResponse.json(ticket, { status: 201 });
   } catch (error) {
-    console.error("Error creating ticket:", error);
+    console.error("Error creating tickets:", error);
     return NextResponse.json({ error: "Failed to create ticket" }, { status: 500 });
   }
 }

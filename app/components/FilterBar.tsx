@@ -1,6 +1,7 @@
 'use client';
 
-import { TicketStatus, TicketPriority, MOCK_USERS, STATUS_ORDER } from '@/app/types';
+import { TicketStatus, TicketPriority, STATUS_ORDER } from '@/app/types';
+import { useJira } from '@/app/context/JiraContext';
 
 export type FilterState = {
   search: string;
@@ -17,6 +18,8 @@ interface FilterBarProps {
 }
 
 export default function FilterBar({ filters, onChange }: FilterBarProps) {
+  const { selectedProjectId, projectMembers } = useJira();
+  const members = projectMembers[selectedProjectId] || [];
 
   return (
     <div className="flex items-center gap-2 p-2 bg-white dark:bg-[#242424] rounded-sm border border-[#E8E4DD] dark:border-[#3D3D3D]">
@@ -66,9 +69,9 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
         className="py-1.5 px-2 text-xs bg-transparent border-0 focus:outline-none cursor-pointer text-[#8B8680] hover:text-[#1A1A1A] dark:hover:text-[#E8E6E3]"
       >
         <option value="">Assignee</option>
-        {MOCK_USERS.map((user) => (
-          <option key={user.id} value={user.id}>
-            {user.name}
+        {members.map((user) => (
+          <option key={user.id} value={user.email}>
+            {user.name || user.email}
           </option>
         ))}
       </select>

@@ -1,9 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { SignInButton, SignUpButton, useUser } from '@clerk/nextjs';
 import { Package, Workflow, Users, Filter, ArrowRight, Check, Mail, User, AtSign, MessageSquare, Send, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
-import { useState } from 'react';
 
 const FEATURES = [
   {
@@ -152,7 +152,7 @@ export default function LandingPage() {
             <div className="relative rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 shadow-2xl">
               <div className="absolute inset-0 bg-gradient-to-b from-white/0 via-transparent to-slate-50 dark:to-slate-900/50 pointer-events-none" />
               <div className="aspect-[16/9] flex items-center justify-center">
-                <img src="/dashboard_screenshot.png" alt="Dashboard Preview" className="w-full h-full object-fill" />
+                <Image src="/dashboard_screenshot.png" alt="Dashboard Preview" fill className="object-fill" />
               </div>
             </div>
           </div>

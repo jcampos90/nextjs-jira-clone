@@ -54,6 +54,25 @@ export async function PUT(
     }
 
     const body = await request.json();
+    
+    // Resolve assigneeId - could be sent as assigneeId directly, 
+    // or as assignee (email or userId)
+    let assigneeId = body.assigneeId;
+    if (assigneeId === undefined && body.assignee !== undefined) {
+      // Check if assignee looks like a user ID (not an email)
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (emailRegex.test(body.assignee)) {
+        // It's an email, look up the user
+        const assigneeUser = await prisma.user.findUnique({
+          where: { email: body.assignee },
+        });
+        assigneeId = assigneeUser?.id || null;
+      } else {
+        // It's already a user ID
+        assigneeId = body.assignee;
+      }
+    }
+
     const updatedTicket = await prisma.ticket.update({
       where: { id },
       data: {
@@ -61,7 +80,7 @@ export async function PUT(
         description: body.description,
         status: body.status,
         priority: body.priority,
-        assigneeId: body.assigneeId,
+        assigneeId: assigneeId,
         dueDate: body.dueDate,
       },
       include: {
