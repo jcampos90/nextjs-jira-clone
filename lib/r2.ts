@@ -1,19 +1,20 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl as createPresignedUrl } from '@aws-sdk/s3-request-presigner';
 
-const r2Client = new S3Client({
-  region: 'auto',
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+const idriveClient = new S3Client({
+  region: process.env.IDRIVE_REGION || 'us-east-1',
+  endpoint: process.env.IDRIVE_ENDPOINT,
   credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+    accessKeyId: process.env.IDRIVE_ACCESS_KEY!,
+    secretAccessKey: process.env.IDRIVE_SECRET_KEY!,
   },
+  forcePathStyle: true,
 });
 
-const BUCKET_NAME = process.env.R2_BUCKET_NAME!;
+const BUCKET_NAME = process.env.IDRIVE_BUCKET_NAME!;
 
 /**
- * Upload a file to Cloudflare R2.
+ * Upload a file to IDrive E2.
  * @param buffer - File content as Buffer
  * @param filename - Original filename
  * @param mimeType - MIME type of the file
@@ -26,7 +27,7 @@ export async function uploadFile(
 ): Promise<string> {
   const storageKey = `attachments/${Date.now()}-${filename}`;
 
-  await r2Client.send(
+  await idriveClient.send(
     new PutObjectCommand({
       Bucket: BUCKET_NAME,
       Key: storageKey,
@@ -39,11 +40,11 @@ export async function uploadFile(
 }
 
 /**
- * Delete a file from Cloudflare R2.
- * @param storageKey - The R2 object key
+ * Delete a file from IDrive E2.
+ * @param storageKey - The IDrive E2 object key
  */
 export async function deleteFile(storageKey: string): Promise<void> {
-  await r2Client.send(
+  await idriveClient.send(
     new DeleteObjectCommand({
       Bucket: BUCKET_NAME,
       Key: storageKey,
@@ -52,8 +53,8 @@ export async function deleteFile(storageKey: string): Promise<void> {
 }
 
 /**
- * Get a temporary signed URL to download a file from R2.
- * @param storageKey - The R2 object key
+ * Get a temporary signed URL to download a file from IDrive E2.
+ * @param storageKey - The IDrive E2 object key
  * @returns Signed URL valid for 1 hour
  */
 export async function getSignedUrl(storageKey: string): Promise<string> {
@@ -62,5 +63,5 @@ export async function getSignedUrl(storageKey: string): Promise<string> {
     Key: storageKey,
   });
 
-  return createPresignedUrl(r2Client, command, { expiresIn: 3600 });
+  return createPresignedUrl(idriveClient, command, { expiresIn: 3600 });
 }
