@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { Ticket, TicketStatus, Project } from '@/app/types';
+import { Ticket, TicketStatus, Project, Attachment } from '@/app/types';
 
 interface ApiProject {
   id: string;
@@ -32,6 +32,18 @@ interface ApiTicket {
   assignee: { id: string; name: string | null; email: string } | null;
 }
 
+interface ApiAttachment {
+  id: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  storageKey: string;
+  ticketId: string;
+  uploadedById: string;
+  uploadedBy?: { id: string; name: string | null; email: string };
+  createdAt: string;
+}
+
 interface JiraContextType {
   projects: Project[];
   tickets: Ticket[];
@@ -44,6 +56,10 @@ interface JiraContextType {
   updateTicket: (id: string, ticket: Partial<Ticket>) => Promise<void>;
   deleteTicket: (id: string) => Promise<void>;
   moveTicket: (id: string, newStatus: TicketStatus) => Promise<void>;
+  attachments: Record<string, Attachment[]>;
+  setAttachments: (ticketId: string, attachments: Attachment[]) => void;
+  addAttachment: (ticketId: string, file: File) => Promise<Attachment>;
+  deleteAttachment: (id: string) => Promise<void>;
   isLoading: boolean;
   error: string | null;
 }
@@ -54,6 +70,7 @@ export function JiraProvider({ children }: { children: React.ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const [attachments, setAttachmentsState] = useState<Record<string, Attachment[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -232,6 +249,60 @@ export function JiraProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const setAttachments = useCallback((ticketId: string, newAttachments: Attachment[]) => {
+    setAttachmentsState((prev) => ({
+      ...prev,
+      [ticketId]: newAttachments,
+    }));
+  }, []);
+
+  const addAttachment = useCallback(async (ticketId: string, file: File): Promise<Attachment> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('ticketId', ticketId);
+
+    const res = await fetch('/api/attachments/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: 'Upload failed' }));
+      throw new Error(errorData.error || 'Failed to upload attachment');
+    }
+
+    const apiAttachment: ApiAttachment = await res.json();
+    const attachment: Attachment = {
+      ...apiAttachment,
+      createdAt: new Date(apiAttachment.createdAt).getTime(),
+    };
+
+    setAttachmentsState((prev) => ({
+      ...prev,
+      [ticketId]: [...(prev[ticketId] || []), attachment],
+    }));
+
+    return attachment;
+  }, []);
+
+  const deleteAttachment = useCallback(async (id: string) => {
+    const res = await fetch(`/api/attachments/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (!res.ok) {
+      throw new Error('Failed to delete attachment');
+    }
+
+    setAttachmentsState((prev) => {
+      const updated = { ...prev };
+      for (const ticketId of Object.keys(updated)) {
+        updated[ticketId] = updated[ticketId].filter((a) => a.id !== id);
+      }
+      return updated;
+    });
+  }, []);
+
   return (
     <JiraContext.Provider
       value={{
@@ -246,6 +317,10 @@ export function JiraProvider({ children }: { children: React.ReactNode }) {
         updateTicket,
         deleteTicket,
         moveTicket,
+        attachments,
+        setAttachments,
+        addAttachment,
+        deleteAttachment,
         isLoading,
         error,
       }}

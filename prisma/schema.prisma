@@ -18,6 +18,7 @@ model User {
   collaboratedProjects ProjectCollaborator[]
   createdTickets    Ticket[]              @relation("TicketCreator")
   assignedTickets   Ticket[]              @relation("TicketAssignee")
+  attachments       Attachment[]
 }
 
 model Project {
@@ -89,4 +90,19 @@ model Ticket {
 
   assigneeId  String?
   assignee    User?         @relation("TicketAssignee", fields: [assigneeId], references: [id])
+
+  attachments Attachment[]
+}
+
+model Attachment {
+  id           String   @id @default(cuid())
+  filename     String
+  mimeType     String
+  size         Int
+  storageKey   String
+  ticketId     String
+  ticket       Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
 }

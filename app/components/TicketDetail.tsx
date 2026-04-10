@@ -5,6 +5,8 @@ import { useJira } from '@/app/context/JiraContext';
 import { formatDateLong } from '@/app/types';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
+import UploadZone from './UploadZone';
+import AttachmentList from './AttachmentList';
 
 interface TicketDetailProps {
   ticket: Ticket;
@@ -14,9 +16,10 @@ interface TicketDetailProps {
 }
 
 export default function TicketDetail({ ticket, onClose, onEdit, onDelete }: TicketDetailProps) {
-  const { projects, moveTicket } = useJira();
+  const { projects, moveTicket, attachments } = useJira();
   const assignee = MOCK_USERS.find((u) => u.id === ticket.assignee);
   const project = projects.find((p) => p.id === ticket.projectId);
+  const ticketAttachments = attachments[ticket.id] || [];
 
   const currentIndex = STATUS_ORDER.indexOf(ticket.status);
   const canMoveForward = currentIndex < STATUS_ORDER.length - 1;
@@ -85,6 +88,14 @@ export default function TicketDetail({ ticket, onClose, onEdit, onDelete }: Tick
               <p className="text-[#2D2D2D] dark:text-[#E8E6E3] leading-relaxed whitespace-pre-wrap">
                 {ticket.description || 'No description provided'}
               </p>
+            </div>
+
+            <div>
+              <h3 className="text-xs font-medium text-[#8B8680] uppercase tracking-wider mb-2">Attachments</h3>
+              <div className="mb-3">
+                <UploadZone ticketId={ticket.id} />
+              </div>
+              <AttachmentList ticketId={ticket.id} attachments={ticketAttachments} />
             </div>
             
             <div className="grid grid-cols-2 gap-6">

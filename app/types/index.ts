@@ -29,6 +29,18 @@ export interface User {
   email: string;
 }
 
+export interface Attachment {
+  id: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  storageKey: string;
+  ticketId: string;
+  uploadedById: string;
+  uploadedBy?: { id: string; name: string | null; email: string };
+  createdAt: number;
+}
+
 export const STATUS_CONFIG: Record<TicketStatus, { label: string; color: string; dot: string }> = {
   todo: { label: 'To Do', color: 'bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-400', dot: 'bg-slate-400' },
   'in-progress': { label: 'In Progress', color: 'bg-[#c2e7ff]/20 text-[#1a3a4a] dark:bg-[#c2e7ff]/10 dark:text-[#c2e7ff]', dot: 'bg-[#1a3a4a]' },
