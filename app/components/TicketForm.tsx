@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Ticket, TicketStatus, TicketPriority, MOCK_USERS, STATUS_ORDER } from '@/app/types';
+import { Ticket, TicketStatus, TicketPriority, STATUS_ORDER } from '@/app/types';
 import { useJira } from '@/app/context/JiraContext';
 
 interface TicketFormProps {
@@ -10,14 +10,15 @@ interface TicketFormProps {
   onClose: () => void;
 }
 
-function getInitialState(ticket: Ticket | null | undefined) {
+function getInitialState(ticket: Ticket | null | undefined, members: { id: string; email: string }[]) {
   if (ticket) {
+    const member = members.find(m => m.email === ticket.assignee);
     return {
       title: ticket.title,
       description: ticket.description,
       status: ticket.status,
       priority: ticket.priority,
-      assignee: ticket.assignee,
+      assigneeId: member?.id || '',
       projectId: ticket.projectId,
       dueDate: ticket.dueDate || '',
     };
@@ -27,22 +28,35 @@ function getInitialState(ticket: Ticket | null | undefined) {
     description: '',
     status: 'todo' as TicketStatus,
     priority: 'medium' as TicketPriority,
-    assignee: '',
+    assigneeId: '',
     projectId: '',
     dueDate: '',
   };
 }
 
 export default function TicketForm({ ticket, onSubmit, onClose }: TicketFormProps) {
-  const { projects, selectedProjectId } = useJira();
-  const [initialState] = useState(() => getInitialState(ticket));
+  const { projects, selectedProjectId, projectMembers } = useJira();
+  const [initialState] = useState(() => getInitialState(ticket, []));
   const [title, setTitle] = useState(initialState.title);
   const [description, setDescription] = useState(initialState.description);
   const [status, setStatus] = useState<TicketStatus>(initialState.status);
   const [priority, setPriority] = useState<TicketPriority>(initialState.priority);
-  const [assignee, setAssignee] = useState(initialState.assignee);
+  const [assigneeId, setAssigneeId] = useState(initialState.assigneeId);
   const [projectId, setProjectId] = useState(initialState.projectId || selectedProjectId);
   const [dueDate, setDueDate] = useState(initialState.dueDate);
+  const [assigneeInitialized, setAssigneeInitialized] = useState(false);
+
+  const currentProjectId = projectId || selectedProjectId;
+  const availableMembers = projectMembers[currentProjectId] || [];
+
+  // When members load, map the assignee email to user ID if needed (only once)
+  if (ticket?.assignee && availableMembers.length > 0 && !assigneeInitialized) {
+    const member = availableMembers.find(m => m.email === ticket.assignee);
+    if (member) {
+      setAssigneeId(member.id);
+      setAssigneeInitialized(true);
+    }
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +65,7 @@ export default function TicketForm({ ticket, onSubmit, onClose }: TicketFormProp
       description,
       status,
       priority,
-      assignee,
+      assignee: assigneeId,  // Now sending user ID
       projectId: projectId || selectedProjectId,
       dueDate: dueDate || null,
     });
@@ -164,14 +178,14 @@ export default function TicketForm({ ticket, onSubmit, onClose }: TicketFormProp
                 Assignee
               </label>
               <select
-                value={assignee}
-                onChange={(e) => setAssignee(e.target.value)}
+                value={assigneeId}
+                onChange={(e) => setAssigneeId(e.target.value)}
                 className="select-field"
               >
                 <option value="">Unassigned</option>
-                {MOCK_USERS.map((user) => (
+                {availableMembers.map((user) => (
                   <option key={user.id} value={user.id}>
-                    {user.name}
+                    {user.name || user.email}
                   </option>
                 ))}
               </select>

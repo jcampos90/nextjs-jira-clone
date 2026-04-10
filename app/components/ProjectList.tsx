@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useCallback, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { useJira } from '@/app/context/JiraContext';
 
 interface ProjectListProps {
@@ -10,15 +10,7 @@ interface ProjectListProps {
 }
 
 export default function ProjectList({ onSelectProject, onCreateProject, onSettingsClick }: ProjectListProps) {
-  const { projects, selectedProjectId, setSelectedProjectId, deleteProject, tickets } = useJira();
-
-  const ticketCountMap = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const ticket of tickets) {
-      map.set(ticket.projectId, (map.get(ticket.projectId) ?? 0) + 1);
-    }
-    return map;
-  }, [tickets]);
+  const { projects, selectedProjectId, setSelectedProjectId, deleteProject } = useJira();
 
   const handleSelect = useRef(onSelectProject).current;
 
@@ -67,9 +59,6 @@ export default function ProjectList({ onSelectProject, onCreateProject, onSettin
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500 bg-slate-100 dark:bg-slate-700/50 px-2 py-0.5 rounded">
-                  {ticketCountMap.get(project.id) ?? 0}
-                </span>
                 {project.id !== 'default' && (
                   <button
                     onClick={(e) => {

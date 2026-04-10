@@ -9,6 +9,7 @@ import TicketCard from '@/app/components/TicketCard';
 import FilterBar, { FilterState } from '@/app/components/FilterBar';
 import ProjectList from '@/app/components/ProjectList';
 import LandingPage from '@/app/components/LandingPage';
+import TaskLoader from '@/app/components/TaskLoader';
 import { useAuth } from '@clerk/nextjs';
 
 const TicketForm = dynamic(() => import('@/app/components/TicketForm'), { ssr: false });
@@ -19,7 +20,7 @@ const ProjectSettingsModal = dynamic(() => import('@/app/components/ProjectSetti
 
 export default function Home() {
   const { isLoaded, isSignedIn } = useAuth();
-  const { tickets, addTicket, updateTicket, deleteTicket, selectedProjectId, projects, addProject, updateProject } = useJira();
+  const { tickets, addTicket, updateTicket, deleteTicket, selectedProjectId, projects, addProject, updateProject, isTicketsLoading } = useJira();
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     status: '',
@@ -160,39 +161,43 @@ export default function Home() {
         <main className="flex-1 p-8 bg-[#f8fafc] dark:bg-[#0f172a]">
           <FilterBar filters={filters} onChange={setFilters} />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
-            {STATUS_ORDER.map((status, index) => (
-              <div 
-                key={status} 
-                className="kanban-column animate-fade-in"
-                style={{ animationDelay: `${index * 0.05}s` }}
-              >
-                <div className="column-header mb-4">
-                  <h2 className="font-display font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${STATUS_CONFIG[status].dot}`} />
-                    {STATUS_CONFIG[status].label}
-                  </h2>
-                  <span className="text-sm text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">
-                    {getTicketsByStatus(status).length}
-                  </span>
+          {isTicketsLoading ? (
+            <TaskLoader />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+              {STATUS_ORDER.map((status, index) => (
+                <div 
+                  key={status} 
+                  className="kanban-column animate-fade-in"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <div className="column-header mb-4">
+                    <h2 className="font-display font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${STATUS_CONFIG[status].dot}`} />
+                      {STATUS_CONFIG[status].label}
+                    </h2>
+                    <span className="text-sm text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">
+                      {getTicketsByStatus(status).length}
+                    </span>
+                  </div>
+                  <div className="flex-1 space-y-4 min-h-[300px] pb-4">
+                    {getTicketsByStatus(status).map((ticket) => (
+                      <TicketCard
+                        key={ticket.id}
+                        ticket={ticket}
+                        onClick={() => setSelectedTicket(ticket)}
+                      />
+                    ))}
+                    {getTicketsByStatus(status).length === 0 && (
+                      <div className="text-center py-8 text-slate-400 text-sm border border-dashed border-slate-200 dark:border-slate-700 rounded-sm">
+                        No tasks
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="flex-1 space-y-4 min-h-[300px] pb-4">
-                  {getTicketsByStatus(status).map((ticket) => (
-                    <TicketCard
-                      key={ticket.id}
-                      ticket={ticket}
-                      onClick={() => setSelectedTicket(ticket)}
-                    />
-                  ))}
-                  {getTicketsByStatus(status).length === 0 && (
-                    <div className="text-center py-8 text-slate-400 text-sm border border-dashed border-slate-200 dark:border-slate-700 rounded-sm">
-                      No tasks
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </main>
       </div>
 
